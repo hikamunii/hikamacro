@@ -21,15 +21,9 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Restore packaged source and icon
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force src, assets | Out-Null
-          [IO.File]::WriteAllBytes("src/main.rs.gz", [Convert]::FromBase64String((Get-Content "src/main.rs.gz.b64" -Raw)))
-          [IO.File]::WriteAllBytes("src/setup.rs.gz", [Convert]::FromBase64String((Get-Content "src/setup.rs.gz.b64" -Raw)))
-          [IO.File]::WriteAllBytes("assets/Hika.ico", [Convert]::FromBase64String((Get-Content "assets/Hika.ico.b64" -Raw)))
-          gzip -d -f src/main.rs.gz
-          gzip -d -f src/setup.rs.gz
+      - name: Restore packed source and icon
+        shell: cmd
+        run: python tools\restore.py
 
       - name: Build payload
         shell: cmd
