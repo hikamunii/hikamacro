@@ -1,0 +1,57 @@
+name: Build Hika Windows
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      CARGO_TERM_COLOR: always
+      RUSTFLAGS: -C target-feature=+crt-static -C link-arg=/OPT:REF -C link-arg=/OPT:ICF
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Restore packaged source and icon
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force src, assets | Out-Null
+          [IO.File]::WriteAllBytes("src/main.rs.gz", [Convert]::FromBase64String((Get-Content "src/main.rs.gz.b64" -Raw)))
+          [IO.File]::WriteAllBytes("src/setup.rs.gz", [Convert]::FromBase64String((Get-Content "src/setup.rs.gz.b64" -Raw)))
+          [IO.File]::WriteAllBytes("assets/Hika.ico", [Convert]::FromBase64String((Get-Content "assets/Hika.ico.b64" -Raw)))
+          gzip -d -f src/main.rs.gz
+          gzip -d -f src/setup.rs.gz
+
+      - name: Build payload
+        shell: cmd
+        run: cargo build --release --bin HikaPayload
+
+      - name: Build native installer
+        shell: cmd
+        run: cargo build --release --bin HikaSetup
+
+      - name: Package single-file installer
+        shell: cmd
+        run: python tools\package.py target\release\HikaSetup.exe target\release\HikaPayload.exe dist\Hika-Setup-v1.0.0.exe
+
+      - name: Verify packaged installer
+        shell: cmd
+        run: python tools\smoke_check.py dist\Hika-Setup-v1.0.0.exe
+
+      - name: Upload Hika installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Hika-v1.0.0-Windows
+          path: dist/Hika-Setup-v1.0.0.exe
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 30
