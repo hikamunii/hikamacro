@@ -25,6 +25,11 @@ jobs:
         shell: cmd
         run: python tools\restore.py
 
+
+      - name: Diagnose license flow
+        shell: cmd
+        run: python tools\\diagnose_license.py src\\main.rs
+
       - name: Build payload
         shell: cmd
         run: cargo build --release --bin HikaPayload
