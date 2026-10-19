@@ -26,9 +26,9 @@ jobs:
         run: python tools\restore.py
 
 
-      - name: Diagnose license flow
+      - name: Apply source safety patches
         shell: cmd
-        run: python tools\\diagnose_license.py src\\main.rs
+        run: python tools\\patch_source.py
 
       - name: Build payload
         shell: cmd
