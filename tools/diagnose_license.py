@@ -1,10 +1,17 @@
 from pathlib import Path
-import re, sys
-p=Path(sys.argv[1]); lines=p.read_text(encoding='utf-8',errors='replace').splitlines()
-terms=('license','Connection error','Retry','ureq','validate','key','429','rate')
-for i,line in enumerate(lines,1):
-    if any(t.lower() in line.lower() for t in terms):
-        s=line
-        s=re.sub(r'https?://[^"\\s]+','<URL>',s)
-        s=re.sub(r'([A-Za-z0-9_]*(?:secret|token|api_key|apikey)[A-Za-z0-9_]*)\\s*[:=]\\s*[^,;)]+',r'\\1=<REDACTED>',s,flags=re.I)
-        print(f'{i:04d}: {s[:500]}')
+import re,sys
+s=Path(sys.argv[1]).read_text(encoding='utf-8',errors='replace')
+terms=['license','Connection error','Retry','ureq','validate','saved','BindKind','mouse_button','XBUTTON','LBUTTON','RBUTTON','WM_LBUTTON','WM_RBUTTON']
+seen=[]
+for term in terms:
+    print('===',term,'===')
+    start=0; count=0
+    while count<12:
+        i=s.lower().find(term.lower(),start)
+        if i<0: break
+        a=max(0,i-700); b=min(len(s),i+1400)
+        chunk=s[a:b].replace('\\n',' ').replace('\\r',' ')
+        chunk=re.sub(r'https?://[^"\\s]+','<URL>',chunk)
+        print(chunk)
+        print('---')
+        start=i+len(term); count+=1
